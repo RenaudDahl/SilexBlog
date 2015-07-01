@@ -7,7 +7,11 @@
  */
 
 use Symfony\Component\HttpFoundation\Request;
+use SilexBlog\Entity\Article;
+use SilexBlog\Form\Type\ArticleType;
 
+
+// Liste des articles
 $app->get('/blog', function () use ($app) {
 
     $articles = $app['dao.article']->findAll();
@@ -20,6 +24,7 @@ $app->get('/blog', function () use ($app) {
     return $output;
 });
 
+// Affichage d'un seul article
 $app->get('/blog/{id}', function ($id) use ($app) {
 
     $article = $app['dao.article']->findOne($id);
@@ -30,19 +35,19 @@ $app->get('/blog/{id}', function ($id) use ($app) {
     return "<h1>{$article->getTitle()}</h1>"."<p>{$article->getContent()}</p>";
 });
 
+
+// Back-office
+
+// Création d'article
 $app->post('/admin/create', function(Request $request) use ($app) {
 
     $article = new Article();
 
-    $form = $app['form.factory']->createBuilder('form', $article)
-        ->add('title', 'text')
-        ->add('content', 'textarea')
-        ->add('save', 'submit')
-        ->getForm();
-
+    $form = $app['form.factory']->create(new ArticleType(), $article);
     $form->handleRequest($request);
-    if ($form->isValid()) {
-        $app['repository.article']->save($article);
+
+    if ($form->isValid() && $form->isSubmitted()) {
+        $app['dao.article']->save($article);
         $message = "L'article a bien été créé !";
         $app['session']->getFlashBag()->add('success', $message);
 
@@ -57,17 +62,17 @@ $app->post('/admin/create', function(Request $request) use ($app) {
 
 });
 
-$app->post('/admin/update/{article}', function(Request $request, Article $article) use($app) {
 
-    $form = $app['form.factory']->createBuilder('form', $article)
-        ->add('title', 'text')
-        ->add('content', 'textarea')
-        ->add('save', 'submit')
-        ->getForm();
+// Modification d'article
+$app->post('/admin/update/{id}', function(Request $request, $id) use($app) {
 
+    $article = $app['dao.article']->findOne($id);
+
+    $form = $app['form.factory']->create(new ArticleType(), $article);
     $form->handleRequest($request);
-    if ($form->isValid()) {
-        $app['repository.article']->save($article);
+
+    if ($form->isValid() && $form->isSubmitted()) {
+        $app['dao.article']->save($article);
         $message = "L'article a bien été modifié !";
         $app['session']->getFlashBag()->add('success', $message);
 
@@ -80,9 +85,12 @@ $app->post('/admin/update/{article}', function(Request $request, Article $articl
 
     return $app['twig']->render('update.html.twig', $data);
 
-})->convert('article', 'converter.article:convert');
+});
 
-$app->post('/admin/delete/{article}', function(Request $request, Article $article) {
+
+//Suppression d'article
+$app->post('/admin/delete/{id}', function($id) use ($app) {
+    $app['dao.article']->delete($id);
 
     return "L'article a bien été supprimé !";
-})->convert('article', 'converter.article:convert');
+});

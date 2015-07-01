@@ -35,7 +35,7 @@ class ArticleDAO
      * @return array A list of all articles.
      */
     public function findAll() {
-        $sql = "select * from articles order by id desc";
+        $sql = "SELECT * FROM articles";
         $result = $this->db->fetchAll($sql);
 
         $articles = array();
@@ -52,7 +52,8 @@ class ArticleDAO
      * @param array $row The DB row containing Article data.
      * @return \SilexBlog\Entity\Article
      */
-    private function buildArticle(array $row) {
+    private function buildArticle(array $row)
+    {
         $article = new Article();
         $article->setId($row['id']);
         $article->setTitle($row['title']);
@@ -60,11 +61,36 @@ class ArticleDAO
         return $article;
     }
 
-    public function findOne($id){
+    public function findOne($id)
+    {
         $sql = "SELECT * FROM articles WHERE id = ?";
         $result = $this->db->fetchAssoc($sql, array((int) $id));
 
         $article = $this->buildArticle($result[0]);
         return $article;
+    }
+
+    public function save(Article $article)
+    {
+        $articleData = array(
+            'title'     => $article->getTitle(),
+            'content'   => $article->getContent(),
+        );
+
+        if ($article->getId()) {
+
+            $this->db->update('article', $articleData, array('id' => $article->getId()));
+        } else {
+
+            $this->db->insert('article', $articleData);
+
+            $id = $this->getDb()->lastInsertId();
+            $article->setId($id);
+        }
+    }
+
+    public function delete($id)
+    {
+        $this->db->delete('article', array('id' => $id));
     }
 }
