@@ -3,9 +3,9 @@
  * Created by PhpStorm.
  * User: renaud
  * Date: 01/07/15
- * Time: 14:54
+ * Time: 15:36
  */
 
-function getArticles() {
+require __DIR__.'/prod.php';
 
-}
+$app['debug'] = true;

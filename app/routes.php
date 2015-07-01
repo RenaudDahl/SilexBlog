@@ -6,12 +6,14 @@
  * Time: 14:58
  */
 
+use Symfony\Component\HttpFoundation\Request;
+
 $app->get('/blog', function () use ($app) {
-    $sql = "SELECT * FROM articles";
+
+    $articles = $app['dao.article']->findAll();
     $output = '';
-    $articles = $app['db']->fetch($sql);
     foreach($articles as $post){
-        $output .= $post['title'];
+        $output .= $post->getTitle();
         $output .= '<br />';
     }
 
@@ -20,16 +22,13 @@ $app->get('/blog', function () use ($app) {
 
 $app->get('/blog/{id}', function ($id) use ($app) {
 
-    $sql = "SELECT * FROM articles WHERE id=?";
-    $article = $app['db']->fetchAssoc($sql, array((int) $id));
-    if (!isset($article)){
+    $article = $app['dao.article']->findOne($id);
+    if (!isset($article)) {
         $app->abort(404, "L'article que vous recherchez n'existe pas.");
     }
 
-    $post = $article;
-
-    return "<h1>{$post['title']}</h1>"."<p>{$post['content']}</p>";
-})->convert('article', 'converter.article:convert');
+    return "<h1>{$article->getTitle()}</h1>"."<p>{$article->getContent()}</p>";
+});
 
 $app->post('/admin/create', function(Request $request) use ($app) {
 
