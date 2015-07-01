@@ -19,26 +19,20 @@ $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
     ),
 ));
 
-$articles = array(
-   1 => array(
-    'title'     => 'Using Silex',
-    'content'   => '...',
-)
-);
 
 
-
-$app->get('/blog', function () use ($articles) {
+$app->get('/blog', function () use ($app) {
     $output = '';
+    $articles = [];
     foreach($articles as $post){
-        $output .= $post['title'];
+        $output .= $post->getTitle();
         $output .= '<br />';
     }
 
     return $output;
 });
 
-$app->get('/blog/{article}', function (Article $article) use ($articles, $app) {
+$app->get('/blog/{article}', function (Article $article) use ($app) {
     if (!isset($article)){
         $app->abort(404, "L'article que vous recherchez n'existe pas.");
     }
