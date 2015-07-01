@@ -14,23 +14,31 @@ $app->register(new Silex\Provider\DoctrineServiceProvider(), array(
     'db.options' => array(
         'driver'   => 'pdo_sqlite',
         'path'     => __DIR__.'/app.db',
+        'dbname'   => 'blog_silex',
+        'host'     => 'localhost',
+        'user'     => 'renaud',
+        'password' => 'secret',
     ),
 ));
 
 
 
 $app->get('/blog', function () use ($app) {
+    $sql = "SELECT * FROM articles";
     $output = '';
-    $articles = [];
+    $articles = $app['db']->fetch($sql);
     foreach($articles as $post){
-        $output .= $post->getTitle();
+        $output .= $post['title'];
         $output .= '<br />';
     }
 
     return $output;
 });
 
-$app->get('/blog/{article}', function (Article $article) use ($app) {
+$app->get('/blog/{id}', function ($id) use ($app) {
+
+    $sql = "SELECT * FROM articles WHERE id=?";
+    $article = $app['db']->fetchAssoc($sql, array((int) $id));
     if (!isset($article)){
         $app->abort(404, "L'article que vous recherchez n'existe pas.");
     }
