@@ -2,6 +2,7 @@
     "require": {
         "silex/silex": "~1.2",
         "doctrine/dbal": "~2.2",
-        "symfony/form": "^2.7"
+        "symfony/form": "^2.7",
+        "symfony/validator": "^2.7"
     }
 }
