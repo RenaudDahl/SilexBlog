@@ -15,13 +15,15 @@ use SilexBlog\Form\Type\ArticleType;
 $app->get('/blog', function () use ($app) {
 
     $articles = $app['dao.article']->findAll();
-    $output = '';
+    $output = array();
     foreach($articles as $post){
-        $output .= $post->getTitle();
-        $output .= '<br />';
+        $output[] = array(
+            'id'    => $post->getId(),
+            'titre' => $post->getTitle(),
+        );
     }
 
-    return $output;
+    return $app->json($output);
 });
 
 // Affichage d'un seul article
@@ -32,7 +34,12 @@ $app->get('/blog/{id}', function ($id) use ($app) {
         $app->abort(404, "L'article que vous recherchez n'existe pas.");
     }
 
-    return "<h1>{$article->getTitle()}</h1>"."<p>{$article->getContent()}</p>";
+    $output = array(
+        'titre'   => $article->getTitle(),
+        'contenu' => $article->getContent(),
+    );
+
+    return $app->json($output);
 });
 
 
@@ -41,26 +48,26 @@ $app->get('/blog/{id}', function ($id) use ($app) {
 // Création d'article
 $app->post('/admin/create', function(Request $request) use ($app) {
 
-    $article = new Article();
-
-    $form = $app['form.factory']->create(new ArticleType(), $article);
-    $form->handleRequest($request);
-
-    if ($form->isValid() && $form->isSubmitted()) {
-        $app['dao.article']->save($article);
-        $message = "L'article a bien été créé !";
-        $app['session']->getFlashBag()->add('success', $message);
-
+    if (!$request->request->has('title')) {
+        return $app->json('Missing required parameter: title', 400);
+    }
+    if (!$request->request->has('content')) {
+        return $app->json('Missing required parameter: content', 400);
     }
 
-    $data = array(
-        'form' => $form->createView(),
-        'title' => "Ecrire un nouvel article",
+    $article = new Article();
+    $article->setTitle($request->request->get('title'));
+    $article->setContent($request->request->get('content'));
+    $app['dao.article']->save($article);
+
+    $responseData = array(
+        'id' => $article->getId(),
+        'title' => $article->getTitle(),
+        'content' => $article->getContent()
     );
-
-    return $app['twig']->render('create.html.twig', $data);
-
+    return $app->json($responseData, 201);
 });
+
 
 
 // Modification d'article
@@ -68,23 +75,23 @@ $app->post('/admin/update/{id}', function(Request $request, $id) use($app) {
 
     $article = $app['dao.article']->findOne($id);
 
-    $form = $app['form.factory']->create(new ArticleType(), $article);
-    $form->handleRequest($request);
-
-    if ($form->isValid() && $form->isSubmitted()) {
-        $app['dao.article']->save($article);
-        $message = "L'article a bien été modifié !";
-        $app['session']->getFlashBag()->add('success', $message);
-
+    if (!$request->request->has('title')) {
+        return $app->json('Missing required parameter: title', 400);
+    }
+    if (!$request->request->has('content')) {
+        return $app->json('Missing required parameter: content', 400);
     }
 
-    $data = array(
-        'form' => $form->createView(),
-        'title' => "Modifier un article",
+    $article->setTitle($request->request->get('title'));
+    $article->setContent($request->request->get('content'));
+    $app['dao.article']->save($article);
+
+    $responseData = array(
+        'id' => $article->getId(),
+        'title' => $article->getTitle(),
+        'content' => $article->getContent()
     );
-
-    return $app['twig']->render('update.html.twig', $data);
-
+    return $app->json($responseData, 200);
 });
 
 
@@ -92,5 +99,5 @@ $app->post('/admin/update/{id}', function(Request $request, $id) use($app) {
 $app->post('/admin/delete/{id}', function($id) use ($app) {
     $app['dao.article']->delete($id);
 
-    return "L'article a bien été supprimé !";
+    return $app->json('No Content', 204);
 });
